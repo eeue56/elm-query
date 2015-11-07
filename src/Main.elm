@@ -22,12 +22,17 @@ update action model =
 
                 nodes = Query.getAll ".funny"
                 inputNodes = Query.getAll ".sad"
-                inactive = List.filter (not << Query.isActiveElement) inputNodes
+                isFocusedOutside =
+                    List.filter (Query.isActiveElement) inputNodes
+                        |> List.isEmpty
 
                 _ =
-                    case inactive of
-                        x::_ -> Query.focus x
-                        _ -> ()
+                    if isFocusedOutside then
+                        case List.head inputNodes of
+                            Just v -> Query.focus v
+                            Nothing -> ()
+                    else
+                        ()
             in
                 case nodes of
                     first::_ ->
