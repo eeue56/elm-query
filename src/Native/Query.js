@@ -26,14 +26,18 @@ var eq = function eq() {
 
 var activeElement = function activeElement() {
     return function(){
-        console.log("here", document.activeElement);
         return document.activeElement;
     };
 };
 
-var focus = function focus() {
+var focus = function focus(Task) {
     return function(node) {
-        node.focus();
+        return Task.asyncFunction(function (callback) {
+            return (function () {
+                node.focus();
+                return callback(Task.succeed(node));
+            })();
+        });
     };
 };
 
@@ -48,6 +52,8 @@ var make = function make(localRuntime) {
 
     var Maybe = Elm.Maybe.make(localRuntime);
     var List = Elm.Native.List.make(localRuntime);
+    var Task = Elm.Native.Task.make(localRuntime);
+
 
 
     if (localRuntime.Native.Query.values) {
@@ -59,7 +65,7 @@ var make = function make(localRuntime) {
         'getAll': getAll(List),
         'eq' : F2(eq()),
         'activeElement' : activeElement(),
-        'focus': focus()
+        'focus': focus(Task)
     };
 };
 Elm.Native.Query = {};

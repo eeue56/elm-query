@@ -1,6 +1,6 @@
 module Query where
 
-
+import Task exposing (Task)
 import Native.Query
 
 type QueryNode = QueryNode
@@ -21,7 +21,7 @@ eq : QueryNode -> QueryNode -> Bool
 eq =
     Native.Query.eq
 
-focus : QueryNode -> ()
+focus : QueryNode -> Task never QueryNode
 focus =
     Native.Query.focus
 

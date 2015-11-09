@@ -5,16 +5,20 @@ import Html exposing (..)
 import Html.Attributes exposing (id, src, href, class)
 import Html.Events exposing (..)
 import Debug
+import StartApp
+import Task
+import Effects exposing (Effects, Never)
 
 
-type Action = Clicked | Noop
+
+type Action = Focus | Clicked | Noop
 
 type alias Model = Int
 
 model : Model
 model = 0
 
-update : Action -> Model -> Model
+update : Action -> Model -> (Model, Effects Action)
 update action model =
     case action of
         Clicked ->
@@ -26,27 +30,31 @@ update action model =
                     List.filter (Query.isActiveElement) inputNodes
                         |> List.isEmpty
 
-                _ =
+                focuser : Effects Action
+                focuser =
                     if isFocusedOutside then
                         case List.head inputNodes of
-                            Just v -> Query.focus v
-                            Nothing -> ()
+                            Just v ->
+                                Query.focus v
+                                    |> Task.map (\x -> Focus)
+                                    |> Effects.task
+
+                            Nothing -> Effects.none
                     else
-                        ()
+                        Effects.none
             in
                 case nodes of
                     first::_ ->
                         List.filter (Query.eq first) nodes
                             |> List.length
-                    _ -> 0
+                            |> (\n -> (n, focuser))
+                    _ -> (0, focuser)
+        Focus ->
+            (model, Effects.none)
+        Noop ->
+            (model, Effects.none)
 
-        Noop -> model
 
-model' =
-    Signal.foldp
-        update
-        model
-        clicks.signal
 
 clicks : Signal.Mailbox Action
 clicks = Signal.mailbox Noop
@@ -62,4 +70,17 @@ view address model =
         , input [ class "sad" ] []
         ]
 
-main = Signal.map (view clicks.address) model'
+app =
+        StartApp.start
+            { init = (model, Effects.none)
+            , view = view
+            , update = update
+            , inputs = [] }
+
+main =
+    app.html
+
+port tasks : Signal (Task.Task Never ())
+port tasks =
+    app.tasks
+

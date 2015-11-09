@@ -39,10 +39,12 @@ isAnyFunnyActive =
 
 ```elm
 
-focused : ()
+focused : Effects QueryNode
 focused =
     case Query.get "#name" of
-        Just node -> Query.focus node
-        Nothing -> ()
+        Just node ->
+            Query.focus node
+                |> Effects.task
+        Nothing -> Effects.none
 
 ```
